@@ -1,0 +1,293 @@
+## SEIS 603 Python Group Project - Word Match
+## Group member: Michael Lin, Jiaxin Zheng, Kutman Uulu, Khadija Abdigaani
+
+## Please import Pillow and pygame into yout computer before running this program
+## pip install Pillow
+## pip install pygame
+
+import tkinter as tk
+from tkinter import ttk
+from tkinter import messagebox
+import random
+from PIL import Image, ImageTk
+from pygame import mixer
+
+HEIGHT = 520
+WIDTH = 940
+
+## Word Dictionary (20 words)
+wordList = {1:'dog', 2:'cat', 3:'apple', 4:'banana', 5:'orange',
+			6:'chair', 7:'table', 8:'pen', 9:'bag', 10:'water',
+			11:'door', 12:'car', 13:'bus', 14:'soda', 15:'paper',
+			16:'watch', 17:'cup', 18:'bee', 19:'tree', 20:'flower'}
+
+selectWordList = []
+buttonList = []
+
+clickCount = 1      ## to count whether the player clicked once or twice
+matchCount = 0      ## to count if the player finish the game
+score = 0
+buttonText1 = ''
+buttonText2 = ''
+buttonCheckList = []
+
+mixer.init()
+muted = False
+
+def buttonSound():
+    sound = mixer.Sound('buttonsound.wav')
+    sound.play()
+
+def Music(button, on, off):
+    global muted
+
+    mixer.music.load('8bit.wav')
+    mixer.music.play(-1)
+        # token = False
+
+    if not muted:
+        mixer.music.set_volume(1)
+        button.configure(image=on)
+        muted = True
+    else:
+        mixer.music.set_volume(0)
+        button.configure(image=off)
+        muted = False
+
+
+class wordMatch(tk.Tk):
+    def __init__(self, *args, **kwargs):
+        tk.Tk.__init__(self, *args, **kwargs)
+
+        container = tk.Frame(self)
+        container.pack(side='top', fill='both', expand=True)
+        container.grid_rowconfigure(0, weight=1)
+        container.grid_columnconfigure(0, weight=1)
+
+
+        self.frames = {}
+        ## if added a new class(page/window), must add to this list ##
+        pageList = [homePage, Menu, hard]
+
+        for f in pageList:
+            frame = f(container, self)
+            self.frames[f] = frame
+            frame.grid(row=0, column=0, sticky='nsew')
+
+        self.show_frame(homePage)
+
+    ## the main function to control which window to show up
+    def show_frame(self, cont):
+        frame = self.frames[cont]
+        frame.tkraise()
+
+
+class homePage(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+
+        canvas = tk.Canvas(self, height=HEIGHT, width=WIDTH)
+        canvas.pack()
+
+        imageDivider = tk.Frame(self, bg='#7fd2ff')
+        imageDivider.place(relwidth=1, relheight=1)
+
+        imageTemp = Image.open("sky.jpg")
+        picPI = ImageTk.PhotoImage(imageTemp) #Pic PhotoImaged
+        imgTest = tk.Label(imageDivider)
+        imgTest.config(bg="#111111", image=picPI, borderwidth=0) # borderwidth must be 0 to prevent padding
+        imgTest.image = picPI #keep a reference!
+        imgTest.place(x=0, y=0)
+
+        welcomeLabel = tk.Label(self, text='Welcome to Word Match!', font='Verdana 32 bold')
+        welcomeLabel.place(anchor='n', relx=0.54, rely=0.25)
+
+        playerLabel = tk.Label(self, text='Your Name')
+        playerLabel.place(relx=0.3, rely=0.5)
+
+        name = tk.StringVar(self)
+        entry_box = tk.Entry(self, text=name)
+        entry_box.place(relx=0.4, rely=0.5, relwidth=0.3)
+
+        def printname():
+            labelname = tk.Label(text="Hello " + str(name.get())+"!", font="Times 16 bold")
+            labelname.place(relx=0.01, rely=0.05)
+
+        work = tk.Button(self, text="Ok", bg="lightblue", command=lambda: printname())
+        work.place(relx=0.75, rely=0.5)
+
+        startButton = tk.Button(self, text='Start', command=lambda: controller.show_frame(Menu))
+        startButton.place(anchor='n', relx=0.5, rely=0.6)
+
+        image1 = Image.open('on.jpg')
+        playPhoto = ImageTk.PhotoImage(image1)
+        image2 = Image.open('off.jpg')
+        mutePhoto = ImageTk.PhotoImage(image2)
+        muteButton = tk.Button(image=mutePhoto, command=lambda: Music(muteButton, playPhoto, mutePhoto))
+        muteButton.place(anchor='e', relx=0.98, rely=0.9)
+
+
+class Menu(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+
+        canvas = tk.Canvas(self, height=HEIGHT, width=WIDTH)
+        canvas.pack()
+
+        imageDivider = tk.Frame(self, bg='#7fd2ff')
+        imageDivider.place(relwidth=1, relheight=1)
+
+        labelPageMenu = tk.Label(self, text='Please select your level', font='Verdana 32 bold')
+        labelPageMenu.place(anchor='n', relx=0.5, rely=0.3)
+
+        def showLabel():
+            progressLabel = tk.Label(self, text="(In progress)", bg='orange')
+            progressLabel.place(anchor='n', relx=0.65, rely=0.5)
+
+        easyButton = tk.Button(self, text='Word to Picture', command=lambda: showLabel())
+        easyButton.place(anchor='n', relx=0.5, rely=0.5)
+
+        hardButton = tk.Button(self, text='Word to Word', command=lambda: controller.show_frame(hard))
+        hardButton.place(anchor='n', relx=0.5, rely=0.6)
+
+        imageTemp = Image.open("tree.jpg")
+        picPI = ImageTk.PhotoImage(imageTemp) #Pic PhotoImaged
+        imgTest = tk.Label(imageDivider)
+        imgTest.config(bg="#111111", image=picPI, borderwidth=0) # borderwidth must be 0 to prevent padding
+        imgTest.image = picPI #keep a reference!
+        imgTest.place(x=0, y=0)
+
+
+#Import images to the program
+class CustomImage(tk.Label):
+    def __init__(self, parent, imagePath, *args, **kwargs):
+        tk.Label.__init__(self, *args, **kwargs)
+
+        self.parent = parent
+        imageTemp = Image.open(imagePath)
+        picPI = ImageTk.PhotoImage(imageTemp) #Pic PhotoImaged
+        self.configure(bg="#111111", image=picPI, borderwidth=0) # borderwidth must be 0 to prevent padding
+        self.image = picPI #keep a reference!
+
+class hard(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+
+        canvas = tk.Canvas(self, height=HEIGHT, width=WIDTH)
+        canvas.pack()
+        imageDivider = tk.Frame(self, bg='#7fd2ff')
+        imageDivider.place(relwidth=1, relheight=1)
+
+        labelpagehard = tk.Label(self, text='please find identical words', font = 'Verdana 32 bold')
+        labelpagehard.place(anchor='n', relx=0.5, rely=0.08)
+
+
+        imageTemp = Image.open("space.jpg")
+        picPI = ImageTk.PhotoImage(imageTemp) #Pic PhotoImaged
+        imgTest = tk.Label(imageDivider)
+        imgTest.config(bg="#111111", image=picPI, borderwidth=0) # borderwidth must be 0 to prevent padding
+        imgTest.image = picPI #keep a reference!
+        imgTest.place(x=0, y=0)
+
+        # mybackground = PhotoImage(file="/Users/zhengjiaxin/Desktop/blueghost.gif")
+        # mylabel = tk.Label(frame, image=mybackground)
+        # mylabel.place(anchor='n', relx=0.5, rely=0.08)
+
+        ### Now, let's see how to randomly create Word Buttons ###
+        ## first we want to select 8 words from the word dict
+        ## why 8? Because we need 16 words which can make 8 matches
+
+        counter = 0
+        while counter < 8:
+            tempInt = random.randint(1, len(wordList))
+            if wordList[tempInt] not in selectWordList:     ## this prevents randomly selecting same words
+                selectWordList.append(wordList[tempInt])
+                counter += 1
+
+        ## we have our word list of 8 words
+        ## double it into 16 words
+        selectWordList2 = selectWordList*2
+
+        ## create a number list from 0 to 15 in random order
+        counter2 = 0
+        numberList = []
+        while counter2 < 16:
+            tempInt2 = random.randint(0, 15)
+            if tempInt2 not in numberList:      ## same, this prevents creating same numbers
+                numberList.append(tempInt2)
+                counter2 += 1
+
+        def checkMatch(clickButton):  ## check if two buttons matched
+            global clickCount
+            global matchCount
+            global buttonText1
+            global buttonText2
+            global buttonCheckList
+            global score
+
+            # if clickButton:
+            #     mixer.Sound('buttonsound.wav').play()
+
+            if clickCount == 1:                                 ## player first click
+                buttonText1 = clickButton.cget('text')          ## this gets the text of the button
+                buttonCheckList.append(clickButton)             ## put the clicked button into the List
+                clickCount += 1
+
+            elif clickCount == 2:  ## player second click
+                if clickButton == buttonCheckList[0]:           ## if 2nd click = 1st click (clicking the same button)
+                    clickCount = 2                              ## let counter stay at 2
+                    return                                      ## leave the function
+
+                buttonText2 = clickButton.cget('text')          ## get the text of 2nd clicked button
+
+                if buttonText1 == buttonText2:                  ## if 2nd click matches 1st click
+                    print('match')
+                    matchCount += 1
+                    score += 125
+                    buttonCheckList[0].destroy()                ## remove the 1st clicked button (in the List)
+                    buttonCheckList = []                        ## empty the List *important*
+                    clickButton.destroy()                       ## remove the 2nd clicked button
+                    if matchCount == 8:
+                        if score <= 0:
+                            score = 0
+                        messagebox.showinfo("Window", "Well Done! Your score: "+str(score)+"/1000")
+                        labelpagehard.destroy()
+                        endLabel = tk.Label(self, text='Thanks for playing!', font='Verdana 50 bold')
+                        endLabel.place(anchor='n', relx=0.5, rely=0.5)
+
+                else:
+                    buttonCheckList = []                        ## if the clicks do not match, just empty the List *important*
+                    score -= 100
+                clickCount = 1                                  ## reset the counter
+
+        ## create 16 buttons in the order of numberList, assign 16 words to each button
+        button1 = ttk.Button(self, text=selectWordList2[numberList[0]], command=lambda: [buttonSound(), checkMatch(button1)])
+        button2 = ttk.Button(self, text=selectWordList2[numberList[1]], command=lambda: [buttonSound(), checkMatch(button2)])
+        button3 = ttk.Button(self, text=selectWordList2[numberList[2]], command=lambda: [buttonSound(), checkMatch(button3)])
+        button4 = ttk.Button(self, text=selectWordList2[numberList[3]], command=lambda: [buttonSound(), checkMatch(button4)])
+        button5 = ttk.Button(self, text=selectWordList2[numberList[4]], command=lambda: [buttonSound(), checkMatch(button5)])
+        button6 = ttk.Button(self, text=selectWordList2[numberList[5]], command=lambda: [buttonSound(), checkMatch(button6)])
+        button7 = ttk.Button(self, text=selectWordList2[numberList[6]], command=lambda: [buttonSound(), checkMatch(button7)])
+        button8 = ttk.Button(self, text=selectWordList2[numberList[7]], command=lambda: [buttonSound(), checkMatch(button8)])
+        button9 = ttk.Button(self, text=selectWordList2[numberList[8]], command=lambda: [buttonSound(), checkMatch(button9)])
+        button10 = ttk.Button(self, text=selectWordList2[numberList[9]], command=lambda: [buttonSound(), checkMatch(button10)])
+        button11 = ttk.Button(self, text=selectWordList2[numberList[10]], command=lambda: [buttonSound(), checkMatch(button11)])
+        button12 = ttk.Button(self, text=selectWordList2[numberList[11]], command=lambda: [buttonSound(), checkMatch(button12)])
+        button13 = ttk.Button(self, text=selectWordList2[numberList[12]], command=lambda: [buttonSound(), checkMatch(button13)])
+        button14 = ttk.Button(self, text=selectWordList2[numberList[13]], command=lambda: [buttonSound(), checkMatch(button14)])
+        button15 = ttk.Button(self, text=selectWordList2[numberList[14]], command=lambda: [buttonSound(), checkMatch(button15)])
+        button16 = ttk.Button(self, text=selectWordList2[numberList[15]], command=lambda: [buttonSound(), checkMatch(button16)])
+
+        buttonList = [button1, button2, button3, button4, button5, button6, button7, button8,
+                      button9, button10,button11,button12,button13,button14,button15,button16]
+
+        ## place each button on the window
+        i = 0
+        for b in range(1, 5):
+            for c in range(1, 5):
+                buttonList[i].place(relx=b/5, rely=c/5)
+                i += 1
+
+
+app = wordMatch()
+app.mainloop()
